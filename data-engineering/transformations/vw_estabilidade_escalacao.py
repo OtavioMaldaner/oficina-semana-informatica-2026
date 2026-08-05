@@ -13,14 +13,14 @@ from pyspark.sql import functions as F
         "repeticao e estabilidade."
     ),
     schema="""
-        team_id INT REFERENCES fifa_world_cup_2026.gold.dim_selecoes(team_id) COMMENT 'Selecao analisada.',
+        team_id INT CONSTRAINT fk_vw_estabilidade_team REFERENCES fifa_world_cup_2026.gold.dim_selecoes(team_id) COMMENT 'Selecao analisada.',
         team_name STRING COMMENT 'Nome da selecao analisada.',
-        match_id INT REFERENCES fifa_world_cup_2026.gold.ft_partidas(match_id) COMMENT 'Partida atual.',
-        previous_match_id INT REFERENCES fifa_world_cup_2026.gold.ft_partidas(match_id) COMMENT 'Partida anterior da mesma selecao.',
+        match_id INT CONSTRAINT fk_vw_estabilidade_match REFERENCES fifa_world_cup_2026.gold.ft_partidas(match_id) COMMENT 'Partida atual.',
+        previous_match_id INT CONSTRAINT fk_vw_estabilidade_previous_match REFERENCES fifa_world_cup_2026.gold.ft_partidas(match_id) COMMENT 'Partida anterior da mesma selecao.',
         match_date DATE COMMENT 'Data da partida atual.',
         kickoff_time_utc TIMESTAMP COMMENT 'Horario de inicio da partida atual em UTC.',
         stage_id INT REFERENCES fifa_world_cup_2026.gold.dim_etapas(stage_id) COMMENT 'Fase da partida atual.',
-        opponent_team_id INT REFERENCES fifa_world_cup_2026.gold.dim_selecoes(team_id) COMMENT 'Selecao adversaria na partida atual.',
+        opponent_team_id INT CONSTRAINT fk_vw_estabilidade_opponent_team REFERENCES fifa_world_cup_2026.gold.dim_selecoes(team_id) COMMENT 'Selecao adversaria na partida atual.',
         opponent_name STRING COMMENT 'Nome da selecao adversaria.',
         starting_players ARRAY<INT> COMMENT 'Conjunto ordenado dos identificadores dos titulares da partida atual.',
         previous_starting_players ARRAY<INT> COMMENT 'Conjunto ordenado dos titulares da partida anterior.',

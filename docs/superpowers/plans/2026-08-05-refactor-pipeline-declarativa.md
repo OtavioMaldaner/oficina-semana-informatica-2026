@@ -192,7 +192,7 @@ por:
 - [ ] **Step 4: Verificar sintaxe e invariantes**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/vw_*.py && echo "sintaxe OK"
 grep -c "@dp.view(" data-engineering/transformations/vw_*.py
 grep -c "@dp.materialized_view(" data-engineering/transformations/vw_*.py
@@ -250,7 +250,7 @@ por:
 - [ ] **Step 2: Verificar sintaxe**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/dim_selecoes.py && echo "sintaxe OK"
 ```
 
@@ -337,7 +337,7 @@ def dim_etapas():
 - [ ] **Step 2: Verificar sintaxe e invariantes**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/*.py && echo "sintaxe OK"
 echo "spark.read.table nos dim_/ft_ (esperado 0):"
 grep -c "spark.read.table" data-engineering/transformations/dim_*.py data-engineering/transformations/ft_*.py | grep -v ":0" || echo "  0 em todos"
@@ -412,7 +412,7 @@ Código abaixo assume a variante 1. Ajustar conforme a Task 3, como na Task 4.
 - [ ] **Step 4: Verificar o invariante final do refactor de leitura**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/*.py && echo "sintaxe OK"
 echo "spark.read.table no projeto inteiro (esperado 0):"
 grep -rc "spark.read.table" data-engineering/transformations/ data-ingestion/transformations/ | grep -v ":0" || echo "  0 em todos"
@@ -666,7 +666,7 @@ Os `.alias()` ficam aqui de propósito: com dois `teams` unidos sob apelidos dif
 - [ ] **Step 6: Verificar**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/vw_estabilidade_escalacao.py && echo "sintaxe OK"
 echo "casts restantes (esperado 2, ambos em F.lit(None)):"
 grep -c "\.cast(" data-engineering/transformations/vw_estabilidade_escalacao.py
@@ -851,7 +851,7 @@ A linha `(F.col("was_behind") == F.lit(1)).alias("was_behind")` fica intacta: el
 - [ ] **Step 6: Verificar**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/vw_pontos_recuperados.py && echo "sintaxe OK"
 echo "casts restantes (esperado 0):"
 grep -c "\.cast(" data-engineering/transformations/vw_pontos_recuperados.py
@@ -1044,7 +1044,7 @@ Trocar o `select` inteiro do `return` por:
 - [ ] **Step 7: Verificar**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/vw_xpts_selecao_partida.py && echo "sintaxe OK"
 echo "casts restantes (esperado 5 — 2 de spark.range, 2 de factorial, 1 de actual_points):"
 grep -c "\.cast(" data-engineering/transformations/vw_xpts_selecao_partida.py
@@ -1107,7 +1107,7 @@ O texto do `COMMENT` também muda, para ficar consistente com o padrão das outr
 - [ ] **Step 2: Verificar**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/ft_partidas.py && echo "sintaxe OK"
 echo "FKs declaradas em ft_partidas (esperado 5):"
 grep -c "REFERENCES" data-engineering/transformations/ft_partidas.py
@@ -1211,7 +1211,7 @@ mandante e outra para o visitante.
 - [ ] **Step 3: Verificar**
 
 ```bash
-cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026
+cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/*.py && echo "sintaxe OK"
 echo "selectExpr no projeto (esperado 0):"
 grep -rc "selectExpr" data-engineering/transformations/ | grep -v ":0" || echo "  0 em todos"

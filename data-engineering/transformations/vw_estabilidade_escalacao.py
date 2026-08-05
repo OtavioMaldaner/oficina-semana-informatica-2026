@@ -3,8 +3,8 @@ from pyspark.sql import Window
 from pyspark.sql import functions as F
 
 
-@dp.view(
-    name="vw_estabilidade_escalacao",
+@dp.materialized_view(
+    name="fifa_world_cup_2026.gold.vw_estabilidade_escalacao",
     comment=(
         "View analitica que compara os titulares de cada selecao com os da sua "
         "partida anterior. A estabilidade e calculada como o numero de titulares "

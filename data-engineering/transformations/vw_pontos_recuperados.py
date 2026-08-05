@@ -3,8 +3,8 @@ from pyspark.sql import Window
 from pyspark.sql import functions as F
 
 
-@dp.view(
-    name="vw_pontos_recuperados",
+@dp.materialized_view(
+    name="fifa_world_cup_2026.gold.vw_pontos_recuperados",
     comment=(
         "View analitica com uma linha por selecao e partida para medir pontos "
         "recuperados depois de a equipe ficar em desvantagem. O placar e "

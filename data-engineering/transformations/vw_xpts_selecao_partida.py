@@ -2,8 +2,8 @@ from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
 
-@dp.view(
-    name="vw_xpts_selecao_partida",
+@dp.materialized_view(
+    name="fifa_world_cup_2026.gold.vw_xpts_selecao_partida",
     comment=(
         "View analitica com pontos esperados por selecao e partida. O modelo "
         "considera os gols de cada equipe como variaveis de Poisson independentes, "

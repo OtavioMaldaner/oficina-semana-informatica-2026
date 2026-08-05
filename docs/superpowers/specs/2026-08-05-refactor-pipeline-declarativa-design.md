@@ -63,12 +63,15 @@ termina com uma execução observada.
 Objetivo duplo: fazer a pipeline rodar e descobrir a forma correta de `dp.read`
 antes de reescrever treze arquivos.
 
-1. Executar a pipeline e **capturar a mensagem de erro exata** dos `vw_*`.
-2. Corrigir os três `vw_*` conforme a causa observada (ver hipóteses em
-   Suposições). Independente da causa, os três passam a ser
-   `@dp.materialized_view` publicadas em `fifa_world_cup_2026.gold.vw_*`,
-   mantendo o bloco `schema` e as constraints `REFERENCES` — decisão já tomada
-   pelo autor, para que Genie e Power BI possam consultá-las.
+1. **Inventariar e remover os objetos `vw_*` pré-existentes** no Unity Catalog.
+   São eles que bloqueiam a execução (ver A2). Antes de qualquer `DROP`,
+   registrar o tipo e a definição de cada objeto (`DESCRIBE EXTENDED`), para
+   que a remoção seja reversível se a lógica atual for a referência desejada.
+   O `DROP` é destrutivo e foi explicitamente autorizado pelo autor; ainda
+   assim, é um passo isolado e confirmado, nunca embutido em outro.
+2. Converter os três `vw_*` para `@dp.materialized_view` publicadas em
+   `fifa_world_cup_2026.gold.vw_*`, mantendo o bloco `schema` e as constraints
+   `REFERENCES`, para que Genie e Power BI possam consultá-las.
 3. Converter **um único** arquivo, `dim_selecoes.py`, para `dp.read`. É o mais
    simples: uma leitura, sem joins, sem casts.
 4. Rodar de novo. Verificar (a) que a pipeline fica verde e (b) que o DAG mostra
@@ -137,11 +140,9 @@ omissão fique registrada como escolha, não como esquecimento.
    contrário dos dos `vw_*`. Esta é a distinção central da fase 3 e não deve ser
    aplicada em bloco.
 4. **O prefixo `vw_` é mantido** mesmo com os datasets virando materialized
-   views, porque distingue essas três views analíticas das `mv_*`, as Metric
-   Views do Genie. Note que a pasta `metric-views/` foi removida no commit
-   `4cffcf1` e o README ainda a descreve — a distinção de prefixo continua
-   valendo se elas voltarem, e o desalinhamento do README está registrado
-   abaixo.
+   views. Ele sinaliza, para quem lê o catálogo, que são camadas analíticas
+   derivadas — e não fatos ou dimensões do star schema, que usam `ft_` e
+   `dim_`. Renomear também obrigaria a mexer no README sem ganho didático.
 
 ## Suposições não verificadas
 
@@ -167,11 +168,20 @@ maior que a pedida e interage com o catálogo/schema alvo configurado na
 pipeline. Nesse cenário a fase 2 deve ser repactuada com o autor antes de
 prosseguir, não executada como planejado.
 
-**A2 — Causa da falha nos `vw_*`.** A falha é observada; a causa não. Hipóteses:
-(a) `@dp.view` não existe na API nova e o equivalente é `@dp.temporary_view`;
-(b) o decorator existe mas o bloco `schema` com `REFERENCES` é rejeitado nesse
-tipo de dataset; (c) o `name=` sem qualificação dos `vw_*` não resolve. A
-correção depende de qual for, e o passo 1 da fase 1 existe para descobrir.
+**A2 — Causa da falha nos `vw_*` (RESOLVIDA).** Não é erro de API. A pipeline
+falha porque os objetos `vw_*` **já existem no Unity Catalog**, criados fora
+desta pipeline, e o Lakeflow não assume a propriedade de objetos pré-existentes:
+ele exige que sejam removidos antes. Nenhum erro de decorator, de `schema` ou de
+resolução de nome chegou a ser observado — as hipóteses anteriores estavam
+erradas.
+
+Consequência: **não há evidência de que `@dp.view` seja inválido.** A conversão
+dos três para `@dp.materialized_view` permanece, mas pelo motivo já decidido
+pelo autor — precisam ser consultáveis por Genie e Power BI, e temporary views
+não são publicadas —, e não por defeito da API.
+
+Consequência operacional: a fase 1 passa a exigir um **DROP explícito** dos três
+objetos pré-existentes. Ver o passo correspondente e o risco associado.
 
 ## Riscos
 
@@ -180,7 +190,8 @@ correção depende de qual for, e o passo 1 da fase 1 existe para descobrir.
 | A1 se resolve só com nome curto, exigindo mexer nos `name=` | Fase 1 detecta antes de tocar em 13 arquivos; repactuar escopo |
 | Remover casts nos `vw_*` altera tipos de saída | O bloco `schema` de cada MV fixa os tipos; divergência falha a execução em vez de passar silenciosamente |
 | Materializar os 3 `vw_*` aumenta uso de storage | Volume de dados de um torneio (104 partidas); desprezível na Free Edition |
-| Os `vw_*` nunca rodaram, então a lógica em si pode ter bugs | Fora do escopo deste refactor, que é de forma e não de lógica; registrar como trabalho separado se a fase 1 revelar erros de resultado |
+| Os `vw_*` nunca rodaram nesta pipeline, então a lógica pode ter bugs | Fora do escopo deste refactor, que é de forma e não de lógica; registrar como trabalho separado se a fase 1 revelar erros de resultado |
+| `DROP` das `vw_*` pré-existentes perde a definição atual | Capturar `DESCRIBE EXTENDED` de cada uma antes do `DROP`; passo isolado e confirmado |
 
 ## Fora de escopo
 
@@ -188,13 +199,3 @@ correção depende de qual for, e o passo 1 da fase 1 existe para descobrir.
   modelo de Poisson). O refactor preserva comportamento.
 - `genie_tools/` e o notebook `genie_creation.ipynb`.
 - Atualização do README, exceto se a fase 1 mudar a lista de tabelas publicadas.
-
-### Observação registrada, não tratada aqui
-
-O README descreve uma pasta `metric-views/` com as Metric Views `mv_*` do Genie,
-e instrui a executá-las no passo 6 do "Como rodar". Essa pasta **foi removida**
-do repositório no commit `4cffcf1` ("fix tables and remove mvs") e não existe
-mais. O README está, portanto, desalinhado com o repositório num ponto que afeta
-quem tentar seguir a oficina. Isso é anterior e ortogonal a este refactor —
-fica registrado como trabalho separado, a ser decidido pelo autor: restaurar as
-Metric Views ou corrigir o README.

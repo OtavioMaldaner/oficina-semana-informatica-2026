@@ -19,7 +19,7 @@ from pyspark import pipelines as dp
 )
 def dim_selecoes():
     return (
-        spark.read.table("fifa_world_cup_2026.bronze.teams")
+        dp.read("teams")
         .select(
             "team_id",
             "team_name",

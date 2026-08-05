@@ -1,0 +1,1 @@
+from .copa_mundo_2026_metadata import get_copa_mundo_2026_metadata

@@ -12,8 +12,7 @@ from pyspark import pipelines as dp
         stadium_name STRING COMMENT 'Nome oficial do estadio sede.',
         city STRING COMMENT 'Cidade onde o estadio esta localizado.',
         country STRING COMMENT 'Pais sede. Valores esperados: USA, Mexico ou Canada.',
-        capacity INT COMMENT 'Capacidade maxima oficial de publico (numero de assentos) do estadio.',
-        elevation_meters INT COMMENT 'Altitude do estadio em relacao ao nivel do mar (em metros). Fundamental para analisar possivel desgaste fisico dos jogadores.'
+        capacity INT COMMENT 'Capacidade maxima oficial de publico (numero de assentos) do estadio.'
     """
 )
 def dim_estadios():
@@ -25,6 +24,5 @@ def dim_estadios():
             "city",
             "country",
             "capacity",
-            "elevation_meters",
         )
     )

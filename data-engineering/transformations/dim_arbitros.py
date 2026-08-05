@@ -11,8 +11,7 @@ from pyspark import pipelines as dp
     schema="""
         referee_id INT NOT NULL PRIMARY KEY COMMENT 'Identificador unico do arbitro.',
         referee_name STRING COMMENT 'Nome completo do arbitro principal.',
-        country STRING COMMENT 'Pais de origem/federacao do arbitro.',
-        avg_cards_per_game DOUBLE COMMENT 'Media historica de cartoes (amarelos + vermelhos) mostrados por partida por este arbitro. Indicador do "rigor" do arbitro.'
+        country STRING COMMENT 'Pais de origem/federacao do arbitro.'
     """
 )
 def dim_arbitros():
@@ -22,6 +21,5 @@ def dim_arbitros():
             "referee_id",
             "name AS referee_name",
             "country",
-            "avg_cards_per_game",
         )
     )

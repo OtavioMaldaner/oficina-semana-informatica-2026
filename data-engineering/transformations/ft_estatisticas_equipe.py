@@ -13,7 +13,7 @@ from pyspark import pipelines as dp
     schema="""
         match_id INT REFERENCES fifa_world_cup_2026.gold.ft_partidas(match_id) COMMENT 'Chave estrangeira para a partida.',
         team_id INT REFERENCES fifa_world_cup_2026.gold.dim_selecoes(team_id) COMMENT 'Chave estrangeira para a selecao a que as estatisticas pertencem.',
-        possession_pct INT COMMENT 'Percentual de posse de bola da selecao na partida (0 a 100).',
+        possession_pct DOUBLE COMMENT 'Percentual de posse de bola da selecao na partida (0 a 100).',
         total_shots INT COMMENT 'Numero total de finalizacoes (chutes a gol ou para fora) realizadas pela selecao.',
         shots_on_target INT COMMENT 'Numero de finalizacoes no alvo (que exigiram defesa do goleiro adversario ou resultaram em gol).',
         corners INT COMMENT 'Numero de escanteios cobrados pela selecao.',

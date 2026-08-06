@@ -896,9 +896,9 @@ git commit -m "refactor: remove casts redundantes em vw_pontos_recuperados"
 
 ---
 
-## Task 8: Remover casts redundantes de `vw_xpts_selecao_partida.py` — **CONCLUÍDA (pendente confirmação do gate numérico)**
+## Task 8: Remover casts redundantes de `vw_xpts_selecao_partida.py` — **CONCLUÍDA**
 
-**Resultado (2026-08-05):** aplicada, invariante de contagem batido (5 casts restantes, exatamente `spark.range` ×2, `F.factorial` ×2, `actual_points` ×1). Commit `ed1650f`. Pipeline rodada com Tasks 6-8 juntas: verde, confirmado pelo autor ("rodou corretamente"). **Não confirmado explicitamente:** a consulta SQL do Step 8 (soma de `win_probability + draw_probability + loss_probability` = 1.0), que é o gate específico contra divisão inteira introduzida por remoção de cast. Rodar antes de considerar o refactor numérico 100% validado.
+**Resultado (2026-08-05):** aplicada, invariante de contagem batido (5 casts restantes, exatamente `spark.range` ×2, `F.factorial` ×2, `actual_points` ×1). Commit `ed1650f`. Pipeline verde. Gate numérico do Step 8 confirmado por consulta real: `min_soma` = 1, `max_soma` = 1, `min_massa` = 0.996172 (próxima de 1.0, como esperado — nenhuma divisão inteira introduzida pela remoção de casts).
 
 41 chamadas `.cast(` — a maior concentração do projeto. Nenhuma sobre `F.lit(None)`.
 

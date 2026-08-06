@@ -35,16 +35,16 @@ def vw_xpts_selecao_partida():
     matches = (
         dp.read("ft_partidas")
         .select(
-            F.col("match_id").cast("int"),
-            F.col("date").cast("date").alias("match_date"),
-            F.col("kickoff_time_utc").cast("timestamp"),
-            F.col("stage_id").cast("int"),
-            F.col("home_team_id").cast("int"),
-            F.col("away_team_id").cast("int"),
-            F.col("home_score").cast("int"),
-            F.col("away_score").cast("int"),
-            F.col("home_xg").cast("double"),
-            F.col("away_xg").cast("double"),
+            "match_id",
+            F.col("date").alias("match_date"),
+            "kickoff_time_utc",
+            "stage_id",
+            "home_team_id",
+            "away_team_id",
+            "home_score",
+            "away_score",
+            "home_xg",
+            "away_xg",
         )
         .filter(F.col("home_xg").isNotNull() & F.col("away_xg").isNotNull())
     )
@@ -61,7 +61,6 @@ def vw_xpts_selecao_partida():
         F.when(F.col("home_score") > F.col("away_score"), F.lit(3))
         .when(F.col("home_score") == F.col("away_score"), F.lit(1))
         .otherwise(F.lit(0))
-        .cast("int")
         .alias("actual_points"),
     )
 
@@ -77,7 +76,6 @@ def vw_xpts_selecao_partida():
         F.when(F.col("away_score") > F.col("home_score"), F.lit(3))
         .when(F.col("away_score") == F.col("home_score"), F.lit(1))
         .otherwise(F.lit(0))
-        .cast("int")
         .alias("actual_points"),
     )
 
@@ -107,7 +105,7 @@ def vw_xpts_selecao_partida():
 
     outcome_probabilities = scorelines.withColumn(
         "joint_probability",
-        (poisson_for * poisson_against).cast("double"),
+        poisson_for * poisson_against,
     )
 
     grouped_probabilities = outcome_probabilities.groupBy(
@@ -121,33 +119,25 @@ def vw_xpts_selecao_partida():
         "xg_against",
         "actual_points",
     ).agg(
-        F.sum("joint_probability")
-        .cast("double")
-        .alias("probability_mass_0_to_10"),
+        F.sum("joint_probability").alias("probability_mass_0_to_10"),
         F.sum(
             F.when(
                 F.col("modeled_goals_for") > F.col("modeled_goals_against"),
                 F.col("joint_probability"),
             ).otherwise(F.lit(0.0))
-        )
-        .cast("double")
-        .alias("raw_win_probability"),
+        ).alias("raw_win_probability"),
         F.sum(
             F.when(
                 F.col("modeled_goals_for") == F.col("modeled_goals_against"),
                 F.col("joint_probability"),
             ).otherwise(F.lit(0.0))
-        )
-        .cast("double")
-        .alias("raw_draw_probability"),
+        ).alias("raw_draw_probability"),
         F.sum(
             F.when(
                 F.col("modeled_goals_for") < F.col("modeled_goals_against"),
                 F.col("joint_probability"),
             ).otherwise(F.lit(0.0))
-        )
-        .cast("double")
-        .alias("raw_loss_probability"),
+        ).alias("raw_loss_probability"),
     )
 
     metrics = (
@@ -180,10 +170,7 @@ def vw_xpts_selecao_partida():
         )
     )
 
-    teams = dp.read("dim_selecoes").select(
-        F.col("team_id").cast("int"),
-        F.col("team_name").cast("string"),
-    )
+    teams = dp.read("dim_selecoes").select("team_id", "team_name")
 
     return (
         metrics.alias("metrics")
@@ -198,42 +185,26 @@ def vw_xpts_selecao_partida():
             "left",
         )
         .select(
-            F.col("metrics.match_id").cast("int").alias("match_id"),
-            F.col("metrics.match_date").cast("date").alias("match_date"),
-            F.col("metrics.kickoff_time_utc")
-            .cast("timestamp")
-            .alias("kickoff_time_utc"),
-            F.col("metrics.stage_id").cast("int").alias("stage_id"),
-            F.col("metrics.team_id").cast("int").alias("team_id"),
-            F.col("team.team_name").cast("string").alias("team_name"),
-            F.col("metrics.opponent_team_id")
-            .cast("int")
-            .alias("opponent_team_id"),
-            F.col("opponent.team_name")
-            .cast("string")
-            .alias("opponent_name"),
-            F.col("metrics.xg_for").cast("double").alias("xg_for"),
-            F.col("metrics.xg_against").cast("double").alias("xg_against"),
-            F.col("metrics.actual_points")
-            .cast("int")
-            .alias("actual_points"),
-            F.col("metrics.win_probability")
-            .cast("double")
-            .alias("win_probability"),
-            F.col("metrics.draw_probability")
-            .cast("double")
-            .alias("draw_probability"),
-            F.col("metrics.loss_probability")
-            .cast("double")
-            .alias("loss_probability"),
-            F.col("metrics.expected_points")
-            .cast("double")
-            .alias("expected_points"),
-            F.col("metrics.points_above_expected")
-            .cast("double")
-            .alias("points_above_expected"),
-            F.col("metrics.probability_mass_0_to_10")
-            .cast("double")
-            .alias("probability_mass_0_to_10"),
+            F.col("metrics.match_id").alias("match_id"),
+            F.col("metrics.match_date").alias("match_date"),
+            F.col("metrics.kickoff_time_utc").alias("kickoff_time_utc"),
+            F.col("metrics.stage_id").alias("stage_id"),
+            F.col("metrics.team_id").alias("team_id"),
+            F.col("team.team_name").alias("team_name"),
+            F.col("metrics.opponent_team_id").alias("opponent_team_id"),
+            F.col("opponent.team_name").alias("opponent_name"),
+            F.col("metrics.xg_for").alias("xg_for"),
+            F.col("metrics.xg_against").alias("xg_against"),
+            F.col("metrics.actual_points").alias("actual_points"),
+            F.col("metrics.win_probability").alias("win_probability"),
+            F.col("metrics.draw_probability").alias("draw_probability"),
+            F.col("metrics.loss_probability").alias("loss_probability"),
+            F.col("metrics.expected_points").alias("expected_points"),
+            F.col("metrics.points_above_expected").alias(
+                "points_above_expected"
+            ),
+            F.col("metrics.probability_mass_0_to_10").alias(
+                "probability_mass_0_to_10"
+            ),
         )
     )

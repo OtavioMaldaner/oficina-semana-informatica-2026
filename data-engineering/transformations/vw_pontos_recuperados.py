@@ -31,14 +31,14 @@ from pyspark.sql import functions as F
 )
 def vw_pontos_recuperados():
     matches = dp.read("ft_partidas").select(
-        F.col("match_id").cast("int"),
-        F.col("date").cast("date").alias("match_date"),
-        F.col("kickoff_time_utc").cast("timestamp"),
-        F.col("stage_id").cast("int"),
-        F.col("home_team_id").cast("int"),
-        F.col("away_team_id").cast("int"),
-        F.col("home_score").cast("int"),
-        F.col("away_score").cast("int"),
+        "match_id",
+        F.col("date").alias("match_date"),
+        "kickoff_time_utc",
+        "stage_id",
+        "home_team_id",
+        "away_team_id",
+        "home_score",
+        "away_score",
     )
 
     home_perspective = matches.select(
@@ -53,7 +53,6 @@ def vw_pontos_recuperados():
         F.when(F.col("home_score") > F.col("away_score"), F.lit(3))
         .when(F.col("home_score") == F.col("away_score"), F.lit(1))
         .otherwise(F.lit(0))
-        .cast("int")
         .alias("actual_points"),
     )
 
@@ -69,7 +68,6 @@ def vw_pontos_recuperados():
         F.when(F.col("away_score") > F.col("home_score"), F.lit(3))
         .when(F.col("away_score") == F.col("home_score"), F.lit(1))
         .otherwise(F.lit(0))
-        .cast("int")
         .alias("actual_points"),
     )
 
@@ -79,10 +77,10 @@ def vw_pontos_recuperados():
         dp.read("ft_eventos")
         .filter(F.col("event_type") == F.lit("Goal"))
         .select(
-            F.col("event_id").cast("int"),
-            F.col("match_id").cast("int"),
-            F.col("minute").cast("int"),
-            F.col("team_id").cast("int").alias("scoring_team_id"),
+            "event_id",
+            "match_id",
+            "minute",
+            F.col("team_id").alias("scoring_team_id"),
         )
     )
 
@@ -138,16 +136,11 @@ def vw_pontos_recuperados():
                     < F.col("running_goals_against"),
                     F.lit(1),
                 ).otherwise(F.lit(0))
-            )
-            .cast("int")
-            .alias("was_behind")
+            ).alias("was_behind")
         )
     )
 
-    teams = dp.read("dim_selecoes").select(
-        F.col("team_id").cast("int"),
-        F.col("team_name").cast("string"),
-    )
+    teams = dp.read("dim_selecoes").select("team_id", "team_name")
 
     return (
         team_matches.alias("matches")
@@ -169,38 +162,28 @@ def vw_pontos_recuperados():
         )
         .withColumn(
             "was_behind",
-            F.coalesce(F.col("disadvantages.was_behind"), F.lit(0)).cast("int"),
+            F.coalesce(F.col("disadvantages.was_behind"), F.lit(0)),
         )
         .withColumn(
             "recovered_points",
             F.when(
                 F.col("was_behind") == F.lit(1),
                 F.col("matches.actual_points"),
-            )
-            .otherwise(F.lit(0))
-            .cast("int"),
+            ).otherwise(F.lit(0)),
         )
         .select(
-            F.col("matches.match_id").cast("int").alias("match_id"),
-            F.col("matches.match_date").cast("date").alias("match_date"),
-            F.col("matches.kickoff_time_utc")
-            .cast("timestamp")
-            .alias("kickoff_time_utc"),
-            F.col("matches.stage_id").cast("int").alias("stage_id"),
-            F.col("matches.team_id").cast("int").alias("team_id"),
-            F.col("team.team_name").cast("string").alias("team_name"),
-            F.col("matches.opponent_team_id")
-            .cast("int")
-            .alias("opponent_team_id"),
-            F.col("opponent.team_name")
-            .cast("string")
-            .alias("opponent_name"),
-            F.col("matches.goals_for").cast("int").alias("goals_for"),
-            F.col("matches.goals_against").cast("int").alias("goals_against"),
-            F.col("matches.actual_points")
-            .cast("int")
-            .alias("actual_points"),
+            F.col("matches.match_id").alias("match_id"),
+            F.col("matches.match_date").alias("match_date"),
+            F.col("matches.kickoff_time_utc").alias("kickoff_time_utc"),
+            F.col("matches.stage_id").alias("stage_id"),
+            F.col("matches.team_id").alias("team_id"),
+            F.col("team.team_name").alias("team_name"),
+            F.col("matches.opponent_team_id").alias("opponent_team_id"),
+            F.col("opponent.team_name").alias("opponent_name"),
+            F.col("matches.goals_for").alias("goals_for"),
+            F.col("matches.goals_against").alias("goals_against"),
+            F.col("matches.actual_points").alias("actual_points"),
             (F.col("was_behind") == F.lit(1)).alias("was_behind"),
-            F.col("recovered_points").cast("int").alias("recovered_points"),
+            F.col("recovered_points").alias("recovered_points"),
         )
     )

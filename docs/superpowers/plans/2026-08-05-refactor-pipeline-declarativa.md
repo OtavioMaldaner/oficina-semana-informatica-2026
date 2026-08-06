@@ -387,7 +387,9 @@ git commit -m "refactor: le bronze via dp.read em todas as dimensoes e fatos"
 
 ---
 
-## Task 5: Aplicar `dp.read` às oito leituras dos `vw_*`
+## Task 5: Aplicar `dp.read` às oito leituras dos `vw_*` — **CONCLUÍDA**
+
+**Resultado (2026-08-05):** variante 1 (nome curto) confirmada em duas etapas — sonda isolada em `vw_xpts_selecao_partida.py`, pipeline verde; depois aplicada aos três arquivos juntos, pipeline verde de novo com as oito arestas gold→vw no DAG. Commit `01ef766`.
 
 **Não afetada pelo cancelamento da Task 4.** Estas oito leituras são gold→gold, todas dentro da pipeline `data-engineering` — o mesmo tipo de leitura intra-pipeline que a Task 3 comprovou funcionar (a leitura de `dim_selecoes.py` a partir de `vw_estabilidade_escalacao.py` etc. já é intra-pipeline hoje via `spark.read.table`). Ainda não testada com `dp.read`; ao executar, confirmar a variante correta do argumento antes de aplicar aos oito arquivos — provavelmente nome curto (`dp.read("dim_selecoes")`), já que é o mesmo padrão que funciona em qualquer pipeline Lakeflow para datasets locais, mas vale confirmar em um arquivo antes de propagar, como fez a Task 3.
 
@@ -404,7 +406,7 @@ Código abaixo assume a variante 1 (nome curto) — a única já demonstrada pla
 - Consumes: a forma de `dp.read` confirmada na Task 3; as materialized views publicadas na Task 2.
 - Produces: zero ocorrências de `spark.read.table` no projeto inteiro; arestas gold→vw no DAG.
 
-- [ ] **Step 1: `vw_estabilidade_escalacao.py` — três leituras**
+- [x] **Step 1: `vw_estabilidade_escalacao.py` — três leituras**
 
 | Trocar | Por |
 |---|---|
@@ -412,7 +414,7 @@ Código abaixo assume a variante 1 (nome curto) — a única já demonstrada pla
 | `spark.read.table("fifa_world_cup_2026.gold.ft_partidas")` | `dp.read("ft_partidas")` |
 | `spark.read.table("fifa_world_cup_2026.gold.dim_selecoes")` | `dp.read("dim_selecoes")` |
 
-- [ ] **Step 2: `vw_pontos_recuperados.py` — três leituras**
+- [x] **Step 2: `vw_pontos_recuperados.py` — três leituras**
 
 | Trocar | Por |
 |---|---|
@@ -420,38 +422,38 @@ Código abaixo assume a variante 1 (nome curto) — a única já demonstrada pla
 | `spark.read.table("fifa_world_cup_2026.gold.ft_eventos")` | `dp.read("ft_eventos")` |
 | `spark.read.table("fifa_world_cup_2026.gold.dim_selecoes")` | `dp.read("dim_selecoes")` |
 
-- [ ] **Step 3: `vw_xpts_selecao_partida.py` — duas leituras**
+- [x] **Step 3: `vw_xpts_selecao_partida.py` — duas leituras**
 
 | Trocar | Por |
 |---|---|
 | `spark.read.table("fifa_world_cup_2026.gold.ft_partidas")` | `dp.read("ft_partidas")` |
 | `spark.read.table("fifa_world_cup_2026.gold.dim_selecoes")` | `dp.read("dim_selecoes")` |
 
-- [ ] **Step 4: Verificar o invariante final do refactor de leitura**
+- [x] **Step 4: Verificar o invariante final do refactor de leitura** — **(revisado: Task 4 cancelada, números originais não se aplicam mais)**
 
 ```bash
 cd /home/otaviomaldaner/GitHub/oficina-semana-informatica-2026/.claude/worktrees/refactor-pipeline-declarativa
 python3 -m py_compile data-engineering/transformations/*.py && echo "sintaxe OK"
-echo "spark.read.table no projeto inteiro (esperado 0):"
-grep -rc "spark.read.table" data-engineering/transformations/ data-ingestion/transformations/ | grep -v ":0" || echo "  0 em todos"
-echo "spark.read.csv na bronze (esperado 1, nao pode sumir):"
-grep -c "spark.read.csv" data-ingestion/transformations/main.py
-echo "dp.read no projeto (esperado 18):"
-grep -rh "dp.read(" data-engineering/transformations/ | wc -l
+echo "spark.read.table nos vw_ (esperado 0):"
+grep -c "spark.read.table" data-engineering/transformations/vw_*.py
+echo "dp.read nos vw_ (esperado 8):"
+grep -h "dp.read(" data-engineering/transformations/vw_*.py | wc -l
 ```
 
-Esperado: `sintaxe OK`; zero `spark.read.table` em qualquer arquivo; `spark.read.csv` = 1; `dp.read` = 18.
+Verificado: `sintaxe OK`; zero `spark.read.table` nos três `vw_*`; `dp.read` = 8. `spark.read.table` continua presente nas 10 leituras bronze→gold (`dim_*`/`ft_*`), por decisão da Task 4 cancelada — não é regressão.
 
-- [ ] **Step 5: Rodar a pipeline — GATE**
+- [x] **Step 5: Rodar a pipeline — GATE**
 
-Esperado: verde, DAG completo com arestas bronze→gold→vw. Este é o momento em que o objetivo principal do refactor está cumprido e observável.
+Verificado em duas rodadas: sonda isolada (`vw_xpts_selecao_partida.py` sozinho) verde; depois os três arquivos juntos, verde de novo com as oito arestas gold→vw no DAG.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add data-engineering/transformations/vw_*.py
 git commit -m "refactor: le gold via dp.read nas views analiticas"
 ```
+
+Commit real: `01ef766`.
 
 ---
 

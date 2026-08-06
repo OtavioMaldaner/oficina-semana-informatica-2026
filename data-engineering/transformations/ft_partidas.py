@@ -1,9 +1,9 @@
 """
-Camada GOLD — fatos do star schema da Copa do Mundo 2026.
+Camada GOLD — fato principal do star schema da Copa do Mundo 2026.
 
-Contem a tabela fato principal com as metricas dos jogos e uma view 
-achatada (desnormalizada) enriquecida com metadados para otimizar as
-respostas de IA no Databricks Genie e facilitar a criacao de dashboards.
+Uma linha por jogo, com placar e metricas avancadas (xG). Usa dimensao
+de papel duplo: dim_selecoes e referenciada duas vezes, uma para o time
+mandante e outra para o visitante.
 """
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
@@ -30,7 +30,7 @@ from pyspark.sql import functions as F
         away_score INT COMMENT 'Quantidade de gols marcados pela selecao visitante.',
         home_xg DOUBLE COMMENT 'Expected Goals (Gols Esperados) do mandante. Metrica avancada que mede a qualidade e probabilidade das chances de gol criadas.',
         away_xg DOUBLE COMMENT 'Expected Goals (Gols Esperados) do visitante.',
-        referee_id INT COMMENT 'Identificador do arbitro principal da partida.',
+        referee_id INT REFERENCES fifa_world_cup_2026.gold.dim_arbitros(referee_id) COMMENT 'Chave estrangeira para o arbitro principal da partida.',
         status STRING COMMENT 'Status atual do jogo (ex: Completed, In Play, Scheduled).'
     """
 )

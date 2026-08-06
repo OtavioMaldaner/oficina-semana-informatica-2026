@@ -33,20 +33,16 @@ def vw_estabilidade_escalacao():
     lineups = (
         dp.read("ft_escalacoes")
         .filter(F.col("is_starting_xi") == F.lit(True))
-        .select(
-            F.col("match_id").cast("int"),
-            F.col("team_id").cast("int"),
-            F.col("player_id").cast("int"),
-        )
+        .select("match_id", "team_id", "player_id")
     )
 
     matches = dp.read("ft_partidas").select(
-        F.col("match_id").cast("int"),
-        F.col("date").cast("date").alias("match_date"),
-        F.col("kickoff_time_utc").cast("timestamp"),
-        F.col("stage_id").cast("int"),
-        F.col("home_team_id").cast("int"),
-        F.col("away_team_id").cast("int"),
+        "match_id",
+        F.col("date").alias("match_date"),
+        "kickoff_time_utc",
+        "stage_id",
+        "home_team_id",
+        "away_team_id",
     )
 
     starting_lineups = (
@@ -70,7 +66,6 @@ def vw_estabilidade_escalacao():
                 F.col("lineups.team_id") == F.col("matches.away_team_id"),
                 F.col("matches.home_team_id"),
             )
-            .cast("int")
             .alias("opponent_team_id"),
             F.col("lineups.player_id").alias("player_id"),
         )
@@ -85,10 +80,7 @@ def vw_estabilidade_escalacao():
         .agg(
             F.sort_array(F.collect_set("player_id")).alias("starting_players")
         )
-        .withColumn(
-            "starting_xi_count",
-            F.size("starting_players").cast("int"),
-        )
+        .withColumn("starting_xi_count", F.size("starting_players"))
     )
 
     match_sequence_window = Window.partitionBy("team_id").orderBy(
@@ -100,7 +92,7 @@ def vw_estabilidade_escalacao():
     compared_lineups = (
         starting_lineups.withColumn(
             "previous_match_id",
-            F.lag("match_id").over(match_sequence_window).cast("int"),
+            F.lag("match_id").over(match_sequence_window),
         )
         .withColumn(
             "previous_starting_players",
@@ -111,36 +103,27 @@ def vw_estabilidade_escalacao():
             F.when(
                 F.col("previous_starting_players").isNull(),
                 F.lit(None).cast("int"),
-            )
-            .otherwise(
+            ).otherwise(
                 F.size(
                     F.array_intersect(
                         F.col("starting_players"),
                         F.col("previous_starting_players"),
                     )
-                ).cast("int")
-            )
-            .cast("int"),
+                )
+            ),
         )
         .withColumn(
             "lineup_stability_pct",
             F.when(
                 F.col("previous_starting_players").isNull(),
                 F.lit(None).cast("double"),
-            )
-            .otherwise(
-                F.col("repeated_starters").cast("double")
-                * F.lit(100.0)
-                / F.lit(11.0)
-            )
-            .cast("double"),
+            ).otherwise(
+                F.col("repeated_starters") * F.lit(100.0) / F.lit(11.0)
+            ),
         )
     )
 
-    teams = dp.read("dim_selecoes").select(
-        F.col("team_id").cast("int"),
-        F.col("team_name").cast("string"),
-    )
+    teams = dp.read("dim_selecoes").select("team_id", "team_name")
 
     return (
         compared_lineups.alias("lineups")
@@ -155,35 +138,21 @@ def vw_estabilidade_escalacao():
             "left",
         )
         .select(
-            F.col("lineups.team_id").cast("int").alias("team_id"),
-            F.col("team.team_name").cast("string").alias("team_name"),
-            F.col("lineups.match_id").cast("int").alias("match_id"),
-            F.col("lineups.previous_match_id")
-            .cast("int")
-            .alias("previous_match_id"),
-            F.col("lineups.match_date").cast("date").alias("match_date"),
-            F.col("lineups.kickoff_time_utc")
-            .cast("timestamp")
-            .alias("kickoff_time_utc"),
-            F.col("lineups.stage_id").cast("int").alias("stage_id"),
-            F.col("lineups.opponent_team_id")
-            .cast("int")
-            .alias("opponent_team_id"),
-            F.col("opponent.team_name")
-            .cast("string")
-            .alias("opponent_name"),
+            F.col("lineups.team_id").alias("team_id"),
+            F.col("team.team_name").alias("team_name"),
+            F.col("lineups.match_id").alias("match_id"),
+            F.col("lineups.previous_match_id").alias("previous_match_id"),
+            F.col("lineups.match_date").alias("match_date"),
+            F.col("lineups.kickoff_time_utc").alias("kickoff_time_utc"),
+            F.col("lineups.stage_id").alias("stage_id"),
+            F.col("lineups.opponent_team_id").alias("opponent_team_id"),
+            F.col("opponent.team_name").alias("opponent_name"),
             F.col("lineups.starting_players").alias("starting_players"),
             F.col("lineups.previous_starting_players").alias(
                 "previous_starting_players"
             ),
-            F.col("lineups.starting_xi_count")
-            .cast("int")
-            .alias("starting_xi_count"),
-            F.col("lineups.repeated_starters")
-            .cast("int")
-            .alias("repeated_starters"),
-            F.col("lineups.lineup_stability_pct")
-            .cast("double")
-            .alias("lineup_stability_pct"),
+            F.col("lineups.starting_xi_count").alias("starting_xi_count"),
+            F.col("lineups.repeated_starters").alias("repeated_starters"),
+            F.col("lineups.lineup_stability_pct").alias("lineup_stability_pct"),
         )
     )

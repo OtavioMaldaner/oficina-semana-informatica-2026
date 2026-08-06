@@ -1,4 +1,5 @@
 from pyspark import pipelines as dp
+from pyspark.sql import functions as F
 
 @dp.materialized_view(
     name="fifa_world_cup_2026.gold.dim_arbitros",
@@ -15,11 +16,8 @@ from pyspark import pipelines as dp
     """
 )
 def dim_arbitros():
-    return (
-        spark.read.table("fifa_world_cup_2026.bronze.referees")
-        .selectExpr(
-            "referee_id",
-            "name AS referee_name",
-            "country",
-        )
+    return spark.read.table("fifa_world_cup_2026.bronze.referees").select(
+        "referee_id",
+        F.col("name").alias("referee_name"),
+        "country",
     )

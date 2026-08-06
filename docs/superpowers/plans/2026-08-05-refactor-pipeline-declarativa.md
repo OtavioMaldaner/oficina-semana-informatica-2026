@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Adotar `dp.read` em todas as leituras intra-pipeline das camadas bronze e gold e remover ruído de código das transformações, sem alterar nenhuma lógica de negócio.
+**Goal:** Adotar `dp.read` em todas as leituras intra-pipeline da camada gold e remover ruído de código das transformações, sem alterar nenhuma lógica de negócio.
 
-**Architecture:** Uma única pipeline no Lakeflow Pipelines Editor reúne `data-ingestion/transformations/` (bronze, 12 materialized views geradas em laço a partir de CSVs de um Volume) e `data-engineering/transformations/` (gold, 13 arquivos: 5 dimensões, 5 fatos, 3 views analíticas). Todas as 18 leituras de tabela do projeto são intra-pipeline, então `spark.read.table` desaparece por completo; `spark.read.csv` na bronze permanece, por ser leitura de arquivo. O trabalho é faseado porque a pipeline nunca ficou verde: a primeira fase desbloqueia e descobre empiricamente a forma correta do argumento de `dp.read` antes de tocar em treze arquivos.
+**Architecture:** ~~Uma única pipeline no Lakeflow Pipelines Editor reúne `data-ingestion/transformations/` e `data-engineering/transformations/`.~~ **CORRIGIDO em 2026-08-05, pós Task 3:** são duas pipelines separadas no Lakeflow — `data-ingestion` (bronze, 12 materialized views geradas em laço a partir de CSVs de um Volume) e `data-engineering` (gold, 13 arquivos: 5 dimensões, 5 fatos, 3 views analíticas). `dp.read` só resolve datasets declarados **dentro da mesma pipeline**; confirmado empiricamente que nenhuma variante de argumento alcança `bronze.teams` a partir de `data-engineering` (ver Task 3). Logo: as 10 leituras bronze→gold **continuam em `spark.read.table`**; só as 8 leituras gold→gold dentro de `data-engineering` (Task 5) migram para `dp.read`. `spark.read.csv` na bronze permanece, por ser leitura de arquivo.
 
 **Tech Stack:** Databricks Free Edition, Unity Catalog, Lakeflow Spark Declarative Pipelines, `pyspark.pipelines` (importado como `dp`), PySpark DataFrame API.
 
@@ -50,16 +50,16 @@ Nenhum arquivo é criado ou removido. 14 arquivos existentes são modificados.
 | Arquivo | Responsabilidade | Tarefas |
 |---|---|---|
 | `data-ingestion/transformations/main.py` | Bronze: 12 MVs a partir de CSVs | nenhuma (não muda) |
-| `data-engineering/transformations/dim_selecoes.py` | Dimensão seleções | 3 |
-| `data-engineering/transformations/dim_estadios.py` | Dimensão estádios | 4 |
-| `data-engineering/transformations/dim_etapas.py` | Dimensão fases | 4 |
-| `data-engineering/transformations/dim_jogadores.py` | Dimensão jogadores | 4 |
-| `data-engineering/transformations/dim_arbitros.py` | Dimensão árbitros | 4, 10 |
-| `data-engineering/transformations/ft_partidas.py` | Fato partidas | 4, 9, 10 |
-| `data-engineering/transformations/ft_eventos.py` | Fato eventos | 4 |
-| `data-engineering/transformations/ft_escalacoes.py` | Fato escalações | 4 |
-| `data-engineering/transformations/ft_estatisticas_equipe.py` | Fato estatísticas por equipe/partida | 4 |
-| `data-engineering/transformations/ft_estatisticas_jogador.py` | Fato estatísticas por jogador | 4 |
+| `data-engineering/transformations/dim_selecoes.py` | Dimensão seleções | 3 (concluída, sem mudança líquida) |
+| `data-engineering/transformations/dim_estadios.py` | Dimensão estádios | ~~4~~ cancelada |
+| `data-engineering/transformations/dim_etapas.py` | Dimensão fases | ~~4~~ cancelada |
+| `data-engineering/transformations/dim_jogadores.py` | Dimensão jogadores | ~~4~~ cancelada |
+| `data-engineering/transformations/dim_arbitros.py` | Dimensão árbitros | ~~4~~ cancelada, 10 |
+| `data-engineering/transformations/ft_partidas.py` | Fato partidas | ~~4~~ cancelada, 9, 10 |
+| `data-engineering/transformations/ft_eventos.py` | Fato eventos | ~~4~~ cancelada |
+| `data-engineering/transformations/ft_escalacoes.py` | Fato escalações | ~~4~~ cancelada |
+| `data-engineering/transformations/ft_estatisticas_equipe.py` | Fato estatísticas por equipe/partida | ~~4~~ cancelada |
+| `data-engineering/transformations/ft_estatisticas_jogador.py` | Fato estatísticas por jogador | ~~4~~ cancelada |
 | `data-engineering/transformations/vw_estabilidade_escalacao.py` | View analítica: estabilidade de escalação | 2, 5, 6 |
 | `data-engineering/transformations/vw_pontos_recuperados.py` | View analítica: pontos recuperados | 2, 5, 7 |
 | `data-engineering/transformations/vw_xpts_selecao_partida.py` | View analítica: pontos esperados (Poisson) | 2, 5, 8 |
@@ -220,7 +220,14 @@ git commit -m "fix: publica as views analiticas como materialized view em gold"
 
 ---
 
-## Task 3: Sonda — descobrir a forma do argumento de `dp.read`
+## Task 3: Sonda — descobrir a forma do argumento de `dp.read` — **CONCLUÍDA, PREMISSA DERRUBADA**
+
+**Resultado (2026-08-05):** variantes 1 (`dp.read("teams")`) e 2 (`dp.read("bronze.teams")`) falharam em execução real com `AnalysisException: TABLE_OR_VIEW_NOT_FOUND` sobre `fifa_world_cup_2026.gold.teams` — o argumento é resolvido contra o schema alvo da própria pipeline (`gold`), não contra bronze. O DAG do pipeline `data-engineering` não mostra nenhum nó bronze, confirmando que bronze e gold são pipelines Lakeflow separadas neste workspace, não uma única pipeline. Variante 3 (nome totalmente qualificado) não foi testada — descartada por inspeção, já que `dp.read` documentadamente só resolve datasets da mesma pipeline, então nenhuma forma de argumento resolveria isso.
+
+`dim_selecoes.py` foi revertido ao `spark.read.table("fifa_world_cup_2026.bronze.teams")` original (commit `55b74cb`). **Tasks 4 e 5 originais foram repactuadas abaixo:** a conversão de leituras bronze→gold para `dp.read` (Task 4) está cancelada — permanece `spark.read.table`. Task 5 (gold→gold, intra-pipeline) segue válida e não testada ainda.
+
+<details>
+<summary>Texto original da sonda (histórico)</summary>
 
 A forma correta do argumento é desconhecida. O exemplo de produção disponível usa `dp.read('nome_da_funcao')` sobre datasets declarados **sem** `name=`; aqui todos os datasets são declarados com nome de três partes. Esta tarefa converte **um único arquivo** para descobrir a forma antes de reescrever treze.
 
@@ -290,9 +297,16 @@ git commit -m "refactor: le bronze via dp.read em dim_selecoes"
 
 Incluir no corpo do commit qual variante foi confirmada, por exemplo: `Variante confirmada: dp.read("teams") (nome curto).`
 
+</details>
+
 ---
 
-## Task 4: Aplicar `dp.read` aos nove arquivos gold restantes
+## Task 4: Aplicar `dp.read` aos nove arquivos gold restantes — **CANCELADA**
+
+**Cancelada em 2026-08-05.** A Task 3 derrubou a premissa: bronze e gold são pipelines Lakeflow separadas, e `dp.read` não alcança um dataset fora da pipeline atual em nenhuma forma de argumento. As nove leituras bronze→gold abaixo **permanecem em `spark.read.table`**, como já estavam. Nenhuma ação necessária nestes nove arquivos.
+
+<details>
+<summary>Texto original da tarefa (histórico, não executar)</summary>
 
 Conversão mecânica, usando a forma confirmada na Task 3. Um commit só, porque o diff é uniforme e auditável de uma vez.
 
@@ -369,13 +383,17 @@ git add data-engineering/transformations/dim_*.py data-engineering/transformatio
 git commit -m "refactor: le bronze via dp.read em todas as dimensoes e fatos"
 ```
 
+</details>
+
 ---
 
 ## Task 5: Aplicar `dp.read` às oito leituras dos `vw_*`
 
+**Não afetada pelo cancelamento da Task 4.** Estas oito leituras são gold→gold, todas dentro da pipeline `data-engineering` — o mesmo tipo de leitura intra-pipeline que a Task 3 comprovou funcionar (a leitura de `dim_selecoes.py` a partir de `vw_estabilidade_escalacao.py` etc. já é intra-pipeline hoje via `spark.read.table`). Ainda não testada com `dp.read`; ao executar, confirmar a variante correta do argumento antes de aplicar aos oito arquivos — provavelmente nome curto (`dp.read("dim_selecoes")`), já que é o mesmo padrão que funciona em qualquer pipeline Lakeflow para datasets locais, mas vale confirmar em um arquivo antes de propagar, como fez a Task 3.
+
 Mesma conversão, agora nas leituras gold→gold. São oito chamadas em três arquivos.
 
-Código abaixo assume a variante 1. Ajustar conforme a Task 3, como na Task 4.
+Código abaixo assume a variante 1 (nome curto) — a única já demonstrada plausível para leituras intra-pipeline; se falhar, testar variante 2 como na Task 3.
 
 **Files:**
 - Modify: `data-engineering/transformations/vw_estabilidade_escalacao.py` (3 leituras)
@@ -1237,21 +1255,21 @@ git commit -m "refactor: padroniza select e corrige docstring obsoleta"
 
 ## Estado final esperado
 
-Ao fim das dez tarefas:
+Ao fim das dez tarefas (**Task 4 cancelada** — ver nota acima):
 
-- `spark.read.table` não existe mais no projeto — 18 leituras convertidas para `dp.read`.
+- `spark.read.table` continua nas 10 leituras bronze→gold (`dim_*`/`ft_*`, incluindo `dim_selecoes.py`) — cancelado por serem cross-pipeline. As 8 leituras gold→gold dos `vw_*` (Task 5) usam `dp.read`.
 - `spark.read.csv` permanece intacto na bronze (1 ocorrência).
 - Os três `vw_*` são materialized views publicadas em `fifa_world_cup_2026.gold`.
 - Casts caíram de 104 para 7 nos `vw_*` (2 de `F.lit(None)` em estabilidade, 5 de conversão real em xPts); os 26 casts de bronze em `ft_eventos.py` e `ft_estatisticas_jogador.py` permanecem intocados.
 - `ft_partidas` declara 5 FKs, incluindo `referee_id`.
 - Nenhum `selectExpr`, nenhuma docstring obsoleta.
-- O DAG mostra as relações bronze→gold→vw detectadas automaticamente.
+- O DAG mostra as relações gold→vw detectadas automaticamente dentro da pipeline `data-engineering`; a relação bronze→gold não aparece automaticamente no DAG por serem pipelines separadas — permanece como dependência implícita via `spark.read.table`.
 
 ## Riscos herdados da spec
 
 | Risco | Onde é tratado |
 |---|---|
-| `dp.read` só resolver nome curto, exigindo mexer nos `name=` | Task 3, Step 4 — para e repactua antes da Task 4 |
+| `dp.read` não alcançar bronze a partir de gold (pipelines separadas) | **Materializado.** Task 3 confirmado quebrado em execução real; Task 4 cancelada |
 | Remover casts alterar tipos de saída | O `schema` declarado de cada MV faz a execução falhar em vez de passar silenciosamente; Tasks 6–8, Steps de GATE |
 | Remoção de cast introduzir divisão inteira no modelo de Poisson | Task 8, Step 8 — consulta SQL que verifica se as probabilidades somam 1.0 |
 | `DROP` das `vw_*` perder a definição atual | Task 1, Step 2 — `DESCRIBE EXTENDED` antes de destruir |

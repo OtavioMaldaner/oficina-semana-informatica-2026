@@ -457,7 +457,9 @@ Commit real: `01ef766`.
 
 ---
 
-## Task 6: Remover casts redundantes de `vw_estabilidade_escalacao.py`
+## Task 6: Remover casts redundantes de `vw_estabilidade_escalacao.py` — **CONCLUÍDA**
+
+**Resultado (2026-08-05):** aplicada, incluindo a limpeza do bloco `teams` que os Steps originais não cobriam (ver nota no Step 6). Invariante final batido (2 casts restantes, ambos em `F.lit(None)`). Commit `3cc9686`. Pipeline rodada com todas as mudanças das Tasks 6–8 juntas: verde, confirmado pelo autor.
 
 O arquivo tem 32 chamadas `.cast(`. Duas delas se aplicam a `F.lit(None)` e **ficam** — ali o cast declara o tipo do ramo nulo. As demais são redundantes: as colunas vêm de `ft_escalacoes`, `ft_partidas` e `dim_selecoes`, que declaram `schema`.
 
@@ -709,7 +711,9 @@ git commit -m "refactor: remove casts redundantes em vw_estabilidade_escalacao"
 
 ---
 
-## Task 7: Remover casts redundantes de `vw_pontos_recuperados.py`
+## Task 7: Remover casts redundantes de `vw_pontos_recuperados.py` — **CONCLUÍDA**
+
+**Resultado (2026-08-05):** aplicada conforme planejado, invariante final batido (0 casts restantes). Commit `5b7c098`. Pipeline verde (rodada junto com Tasks 6 e 8), confirmado pelo autor.
 
 31 chamadas `.cast(`, nenhuma sobre `F.lit(None)` — todas saem, exceto onde o cast faz conversão real de tipo.
 
@@ -892,7 +896,9 @@ git commit -m "refactor: remove casts redundantes em vw_pontos_recuperados"
 
 ---
 
-## Task 8: Remover casts redundantes de `vw_xpts_selecao_partida.py`
+## Task 8: Remover casts redundantes de `vw_xpts_selecao_partida.py` — **CONCLUÍDA (pendente confirmação do gate numérico)**
+
+**Resultado (2026-08-05):** aplicada, invariante de contagem batido (5 casts restantes, exatamente `spark.range` ×2, `F.factorial` ×2, `actual_points` ×1). Commit `ed1650f`. Pipeline rodada com Tasks 6-8 juntas: verde, confirmado pelo autor ("rodou corretamente"). **Não confirmado explicitamente:** a consulta SQL do Step 8 (soma de `win_probability + draw_probability + loss_probability` = 1.0), que é o gate específico contra divisão inteira introduzida por remoção de cast. Rodar antes de considerar o refactor numérico 100% validado.
 
 41 chamadas `.cast(` — a maior concentração do projeto. Nenhuma sobre `F.lit(None)`.
 

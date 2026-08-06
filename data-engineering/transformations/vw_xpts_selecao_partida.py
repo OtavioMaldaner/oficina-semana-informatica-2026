@@ -33,7 +33,7 @@ from pyspark.sql import functions as F
 )
 def vw_xpts_selecao_partida():
     matches = (
-        spark.read.table("fifa_world_cup_2026.gold.ft_partidas")
+        dp.read("ft_partidas")
         .select(
             F.col("match_id").cast("int"),
             F.col("date").cast("date").alias("match_date"),
@@ -180,7 +180,7 @@ def vw_xpts_selecao_partida():
         )
     )
 
-    teams = spark.read.table("fifa_world_cup_2026.gold.dim_selecoes").select(
+    teams = dp.read("dim_selecoes").select(
         F.col("team_id").cast("int"),
         F.col("team_name").cast("string"),
     )

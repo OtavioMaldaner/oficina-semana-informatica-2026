@@ -30,7 +30,7 @@ from pyspark.sql import functions as F
     """,
 )
 def vw_pontos_recuperados():
-    matches = spark.read.table("fifa_world_cup_2026.gold.ft_partidas").select(
+    matches = dp.read("ft_partidas").select(
         F.col("match_id").cast("int"),
         F.col("date").cast("date").alias("match_date"),
         F.col("kickoff_time_utc").cast("timestamp"),
@@ -76,7 +76,7 @@ def vw_pontos_recuperados():
     team_matches = home_perspective.unionByName(away_perspective)
 
     goals = (
-        spark.read.table("fifa_world_cup_2026.gold.ft_eventos")
+        dp.read("ft_eventos")
         .filter(F.col("event_type") == F.lit("Goal"))
         .select(
             F.col("event_id").cast("int"),
@@ -144,7 +144,7 @@ def vw_pontos_recuperados():
         )
     )
 
-    teams = spark.read.table("fifa_world_cup_2026.gold.dim_selecoes").select(
+    teams = dp.read("dim_selecoes").select(
         F.col("team_id").cast("int"),
         F.col("team_name").cast("string"),
     )

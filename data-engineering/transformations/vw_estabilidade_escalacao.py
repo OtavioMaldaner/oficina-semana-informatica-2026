@@ -31,7 +31,7 @@ from pyspark.sql import functions as F
 )
 def vw_estabilidade_escalacao():
     lineups = (
-        spark.read.table("fifa_world_cup_2026.gold.ft_escalacoes")
+        dp.read("ft_escalacoes")
         .filter(F.col("is_starting_xi") == F.lit(True))
         .select(
             F.col("match_id").cast("int"),
@@ -40,7 +40,7 @@ def vw_estabilidade_escalacao():
         )
     )
 
-    matches = spark.read.table("fifa_world_cup_2026.gold.ft_partidas").select(
+    matches = dp.read("ft_partidas").select(
         F.col("match_id").cast("int"),
         F.col("date").cast("date").alias("match_date"),
         F.col("kickoff_time_utc").cast("timestamp"),
@@ -137,7 +137,7 @@ def vw_estabilidade_escalacao():
         )
     )
 
-    teams = spark.read.table("fifa_world_cup_2026.gold.dim_selecoes").select(
+    teams = dp.read("dim_selecoes").select(
         F.col("team_id").cast("int"),
         F.col("team_name").cast("string"),
     )

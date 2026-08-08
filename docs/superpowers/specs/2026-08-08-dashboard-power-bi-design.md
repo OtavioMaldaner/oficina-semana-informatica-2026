@@ -28,6 +28,22 @@ O projeto já tem:
 Este documento cobre **modelo semântico + relatório**: sem medidas, o
 relatório se resumiria a contagens de linha e somas de colunas cruas.
 
+### Dois repositórios
+
+O projeto vive em dois repositórios Git separados, cada um versionando sua
+própria pasta:
+
+| Repositório | Pasta | Conteúdo |
+|---|---|---|
+| `oficina-semana-informatica-2026` (existente) | `Databricks/oficina-semana-informatica-2026` | pipelines, assets, metadata do Genie, esta spec |
+| [`fifa-world-cup-2026-bi`](https://github.com/OtavioMaldaner/fifa-world-cup-2026-bi) (criado em 2026-08-08, público) | `BI - Semana da Informática` | projeto PBIP (relatório + modelo semântico) |
+
+Consequência para o plano de implementação: todo commit de medida DAX, tema e
+página de relatório acontece no repositório `fifa-world-cup-2026-bi`, com
+`git -C "BI - Semana da Informática"`. A pasta raiz `oficina-semana-informatica-2026`
+(um nível acima dos dois repositórios) não é, ela própria, um repositório —
+não há commit "guarda-chuva" que abranja as duas pastas.
+
 ### Restrição de projeto: legibilidade didática vence
 
 Mesma regra de desempate do refactor de pipelines (`2026-08-05-refactor-pipeline-declarativa-design.md`):
@@ -321,6 +337,11 @@ e `dim_etapas[stage_name]`. `dim_estadios` e `dim_arbitros` só alcançam
 6. **Design gate** — checklist de fechamento da skill `pbi-report-design`
    (identidade propagada, uma intenção por página, espaçamento e margens
    iguais e na grade, chamadas apoiadas em dado do modelo, acessibilidade).
+7. **Publicação** — commit e push para `fifa-world-cup-2026-bi` (branch
+   `main`) só depois dos 6 portões acima passarem. O repositório é público;
+   nada com credencial ou caminho de máquina local deve entrar em um
+   `visual.json` ou `.pbi/localSettings.json` (já coberto pelo `.gitignore`
+   existente).
 
 ## Riscos e decisões aceitas
 
